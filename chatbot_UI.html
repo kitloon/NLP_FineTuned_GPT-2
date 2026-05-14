@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mercedes-Benz AI Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">AI · Assistant</div>
+    <div class="logo-main">Mercedes<span>·</span>Benz</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="section-title">Generation Parameters</div>
+
+    <!-- Temperature -->
+    <div class="param-row">
+      <div class="param-label">
+        <span class="param-name">Temperature</span>
+        <span class="param-value" id="tempVal">0.15</span>
+      </div>
+      <div class="param-desc">Creativity level. Higher = more varied responses, lower = more consistent and predictable.</div>
+      <input type="range" id="temperature" min="0.1" max="2.0" step="0.05" value="0.15">
+    </div>
+
+    <!-- Top-p -->
+    <div class="param-row">
+      <div class="param-label">
+        <span class="param-name">Top-p</span>
+        <span class="param-value" id="toppVal">0.15</span>
+      </div>
+      <div class="param-desc">Vocabulary sampling range. Lower = more focused, higher = more diverse word choices.</div>
+      <input type="range" id="top_p" min="0.1" max="1.0" step="0.05" value="0.15">
+    </div>
+
+    <!-- Repetition Penalty -->
+    <div class="param-row">
+      <div class="param-label">
+        <span class="param-name">Repetition Penalty</span>
+        <span class="param-value" id="repVal">1.00</span>
+      </div>
+      <div class="param-desc">Prevents repetition. Higher values reduce repeated phrases. Recommended range: 1.1–1.5.</div>
+      <input type="range" id="repetition_penalty" min="1.0" max="2.0" step="0.05" value="1.0">
+    </div>
+
+    <!-- Max tokens -->
+    <div class="param-row">
+      <div class="param-label">
+        <span class="param-name">Max New Tokens</span>
+        <span class="param-value" id="tokVal">100</span>
+      </div>
+      <div class="param-desc">Maximum response length in tokens.</div>
+      <input type="range" id="max_new_tokens" min="30" max="400" step="10" value="100">
+    </div>
+
+    <button class="reset-btn" onclick="resetParams()">↺ Reset to Defaults</button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="section-title">Parameter Guide</div>
+    <div class="param-desc" style="line-height: 1.8;">
+      🎯 <b style="color:var(--silver)">Precise price queries</b><br>
+      Temp 0.15 · Top-p 0.15 · Rep 1.0<br><br>
+      💬 <b style="color:var(--silver)">General enquiries</b><br>
+      Temp 0.7 · Top-p 0.9 · Rep 1.2<br><br>
+      🎨 <b style="color:var(--silver)">Descriptive / creative</b><br>
+      Temp 1.0 · Top-p 0.95 · Rep 1.1
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>
+    <span class="status-text">Model ready · GPT-2 Medium</span>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="chat-header">
+    <div class="chat-header-icon">🚗</div>
+    <div class="chat-header-text">
+      <h2>Mercedes-Benz Advisor</h2>
+      <p>FINE-TUNED GPT-2 MEDIUM · MALAYSIA MARKET</p>
+    </div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="empty-state" id="emptyState">
+      <div class="big-icon">✦</div>
+      <h3>Ask me anything</h3>
+      <p>Ask me anything about Mercedes-Benz models, prices, and specifications available in the Malaysian market.</p>
+      <div class="example-chips">
+        <div class="chip" onclick="fillInput('Price check: Mercedes E 200 Malaysia')">E 200 Price</div>
+        <div class="chip" onclick="fillInput('What is the price of the Mercedes-Benz GLC 200 in Malaysia?')">GLC 200</div>
+        <div class="chip" onclick="fillInput('Price check: Mercedes AMG C 43 Malaysia')">AMG C 43</div>
+        <div class="chip" onclick="fillInput('Compare E-Class and C-Class Malaysia price')">E vs C Class</div>
+        <div class="chip" onclick="fillInput('What are the available Mercedes EQ models in Malaysia?')">EQ Electric</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <div class="input-wrap">
+        <textarea id="userInput" rows="1" placeholder="Ask about Mercedes-Benz Malaysia prices, models..."></textarea>
+      </div>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">➤</button>
+    </div>
+    <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+  </div>
+</main>
+
+<script>
+  const DEFAULTS = { temperature: 0.15, top_p: 0.15, repetition_penalty: 1.0, max_new_tokens: 100 };
+
+  // Sync sliders with displayed values
+  const sliders = {
+    temperature:        { el: document.getElementById('temperature'),        val: document.getElementById('tempVal'), fmt: v => v.toFixed(2) },
+    top_p:              { el: document.getElementById('top_p'),              val: document.getElementById('toppVal'), fmt: v => v.toFixed(2) },
+    repetition_penalty: { el: document.getElementById('repetition_penalty'), val: document.getElementById('repVal'),  fmt: v => v.toFixed(2) },
+    max_new_tokens:     { el: document.getElementById('max_new_tokens'),     val: document.getElementById('tokVal'),  fmt: v => parseInt(v) },
+  };
+
+  Object.entries(sliders).forEach(([key, s]) => {
+    s.el.addEventListener('input', () => {
+      s.val.textContent = s.fmt(parseFloat(s.el.value));
+    });
+  });
+
+  function getParams() {
+    return {
+      temperature:        parseFloat(sliders.temperature.el.value),
+      top_p:              parseFloat(sliders.top_p.el.value),
+      repetition_penalty: parseFloat(sliders.repetition_penalty.el.value),
+      max_new_tokens:     parseInt(sliders.max_new_tokens.el.value),
+    };
+  }
+
+  function resetParams() {
+    Object.entries(DEFAULTS).forEach(([key, val]) => {
+      sliders[key].el.value = val;
+      sliders[key].val.textContent = sliders[key].fmt(val);
+    });
+  }
+
+  // Trim answer to the last complete sentence ending in . ! or ?
+  function trimToCompleteSentence(text) {
+    const match = text.match(/^([\s\S]*[.!?])/);
+    if (match) return match[1].trim();
+    return text.trim();
+  }
+
+  // Auto-resize textarea
+  const textarea = document.getElementById('userInput');
+  textarea.addEventListener('input', () => {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+  });
+  textarea.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  function fillInput(text) {
+    textarea.value = text;
+    textarea.focus();
+  }
+
+  function appendMsg(role, text, params = null) {
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+
+    const container = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+
+    const label = document.createElement('div');
+    label.className = 'msg-label';
+    label.textContent = role === 'user' ? 'You' : 'Mercedes AI';
+    div.appendChild(label);
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = text;
+    div.appendChild(bubble);
+
+    if (params && role === 'bot') {
+      const p = document.createElement('div');
+      p.className = 'msg-params';
+      p.textContent = `temp ${params.temperature} · top-p ${params.top_p} · rep ${params.repetition_penalty} · tokens ${params.max_new_tokens}`;
+      div.appendChild(p);
+    }
+
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return bubble;
+  }
+
+  function showThinking() {
+    const container = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'msg bot thinking';
+    div.id = 'thinking';
+
+    const label = document.createElement('div');
+    label.className = 'msg-label';
+    label.textContent = 'Mercedes AI';
+    div.appendChild(label);
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+    div.appendChild(bubble);
+
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function removeThinking() {
+    const t = document.getElementById('thinking');
+    if (t) t.remove();
+  }
+
+  async function sendMessage() {
+    const q = textarea.value.trim();
+    if (!q) return;
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    textarea.value = '';
+    textarea.style.height = 'auto';
+
+    appendMsg('user', q);
+    showThinking();
+
+    const params = getParams();
+
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q, ...params })
+      });
+      const data = await res.json();
+      removeThinking();
+
+      if (data.error) {
+        const div = document.createElement('div');
+        div.className = 'msg bot';
+        const label = document.createElement('div');
+        label.className = 'msg-label';
+        label.textContent = 'Error';
+        const bubble = document.createElement('div');
+        bubble.className = 'error-bubble';
+        bubble.textContent = data.error;
+        div.appendChild(label);
+        div.appendChild(bubble);
+        document.getElementById('messages').appendChild(div);
+      } else {
+        const cleanAnswer = trimToCompleteSentence(data.answer);
+        appendMsg('bot', cleanAnswer, params);
+      }
+    } catch (err) {
+      removeThinking();
+      appendMsg('bot', '⚠ Cannot connect to server. Make sure app.py is running.', null);
+    }
+
+    btn.disabled = false;
+    textarea.focus();
+  }
+</script>
+</body>
+</html>
