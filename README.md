@@ -23,6 +23,10 @@ The model was trained on **Google Colab (T4 GPU)** with automatic checkpoint sav
 | Training precision | FP16 (mixed precision) |
 
 The base model was loaded from HuggingFace and fine-tuned using the HuggingFace `transformers` `Trainer` API.
+---
+
+## Preview
+![Mercedes AI Assistant Demo](screenshots/demo.png)
 
 ---
 
