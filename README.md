@@ -115,62 +115,6 @@ A perplexity of **1.14** (close to the theoretical minimum of 1.0) indicates the
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-```bash
-pip install transformers torch flask
-```
-
-### Load the Model
-
-```python
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-
-MODEL_PATH = "./model"
-
-tokenizer = GPT2Tokenizer.from_pretrained(MODEL_PATH)
-tokenizer.pad_token = tokenizer.eos_token
-
-model = GPT2LMHeadModel.from_pretrained(MODEL_PATH)
-model.eval()
-```
-
----
-
-## Usage
-
-### Python (Headless)
-
-```python
-import torch
-
-def ask(question, max_new_tokens=150, temperature=0.7, top_p=0.9, repetition_penalty=1.2):
-    prompt = f"<|startoftext|>Question: {question}\nAnswer:"
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-
-    with torch.no_grad():
-        output = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=True,
-            temperature=temperature,
-            top_p=top_p,
-            repetition_penalty=repetition_penalty,
-            eos_token_id=tokenizer.eos_token_id,
-            pad_token_id=tokenizer.pad_token_id,
-        )
-
-    decoded = tokenizer.decode(output[0], skip_special_tokens=True)
-    return decoded.split("Answer:")[-1].strip()
-
-# Example queries
-print(ask("Price check: Mercedes E 200 Malaysia"))
-print(ask("What is the price of the Mercedes-Benz AMG CLE 53 in Malaysia?"))
-print(ask("Price check: Mercedes AMG GLB 35 Malaysia"))
-```
-
 ### Generation Parameters
 
 | Parameter | Default | Range | Description |
@@ -190,21 +134,6 @@ print(ask("Price check: Mercedes AMG GLB 35 Malaysia"))
 
 ---
 
-## Web UI
-
-A local web interface is included for interactive use. It runs a Flask backend and serves a browser-based chat UI with real-time parameter controls.
-
-### Running the Web UI
-
-```bash
-python app.py
-```
-
-Then open your browser and go to:
-
-```
-http://localhost:5000
-```
 
 ### Features
 
@@ -235,14 +164,6 @@ mercedes-chatbot/
 
 ---
 
-## Limitations
-
-- **Domain-specific only** — the model is optimised for Mercedes-Benz Malaysia Q&A. Queries outside this domain may produce inaccurate or irrelevant responses.
-- **Pricing data may be outdated** — the model reflects pricing from the training dataset snapshot. Always verify current prices with official [Mercedes-Benz Malaysia](https://www.mercedes-benz.com.my) sources.
-- **English only** — the model is trained on English Q&A pairs. Queries in other languages (e.g., Malay, Chinese) are not guaranteed to produce reliable results.
-- **Low perplexity caveat** — a perplexity of 1.14 indicates strong in-distribution performance, but may also mean the model closely mirrors training data. Responses to novel or ambiguous queries should be verified independently.
-
----
 
 ## Acknowledgements
 
