@@ -4,21 +4,6 @@ A fine-tuned GPT-2 Medium language model trained on Mercedes-Benz Malaysia Q&A d
 
 ---
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Training](#training)
-- [Evaluation Results](#evaluation-results)
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-- [Web UI](#web-ui)
-- [Project Structure](#project-structure)
-- [Limitations](#limitations)
-
----
-
 ## Overview
 
 This project fine-tunes **GPT-2 Medium** (355M parameters) on a custom Mercedes-Benz Malaysia Q&A dataset. The goal is to build a domain-specific chatbot that can accurately answer queries about Mercedes-Benz vehicle pricing, variants, and specifications available in Malaysia.
