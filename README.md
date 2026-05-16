@@ -155,6 +155,5 @@ mercedes-chatbot/
 
 ## Acknowledgements
 
-- [HuggingFace Transformers](https://github.com/huggingface/transformers) — model training and inference
 - [OpenAI GPT-2](https://github.com/openai/gpt-2) — base model
 - Google Colab — T4 GPU training environment
